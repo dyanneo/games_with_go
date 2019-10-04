@@ -32,8 +32,20 @@ func (ball *ball) draw(pixels []byte) {
 	}
 }
 
+func (ball *ball) update() {
+	ball.x += ball.xv
+	ball.y += ball.yv
+
+	if ball.y < 0 {
+		ball.yv = -ball.yv
+	} else if int(ball.y) > winHeight {
+		ball.yv = -ball.yv
+
+	}
+}
+
 // note how pos is NOT named in paddle - go will 'bring along' the pos struct within the paddle struct
-// and can be referenced like paddle.x, where ball's positions must be ball.pos.x
+// and can be referenced like paddle.x
 
 type paddle struct {
 	pos
@@ -56,12 +68,19 @@ func (paddle *paddle) draw(pixels []byte) {
 	}
 }
 
-func (paddle *paddle) update() {
-
+func (paddle *paddle) update(keyState []uint8) {
+	if keyState[sdl.SCANCODE_UP] != 0 {
+		paddle.y--
+	}
+	if keyState[sdl.SCANCODE_DOWN] != 0 {
+		paddle.y++
+	}
 }
 
-func (ball *ball) update() {
-
+func clear(pixels []byte) {
+	for i := range pixels {
+		pixels[i] = 0
+	}
 }
 func setPixel(x, y int, c color, pixels []byte) {
 	index := (y*winWidth + x) * 4
@@ -106,6 +125,8 @@ func main() {
 	player1 := paddle{pos{100, 100}, 20, 100, color{255, 255, 255}}
 	ball := ball{pos{300, 300}, 20, 0, 0, color{255, 255, 255}}
 
+	keyState := sdl.GetKeyboardState()
+
 	for {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch event.(type) {
@@ -113,8 +134,9 @@ func main() {
 				return
 			}
 		}
-
+		clear(pixels)
 		player1.draw(pixels)
+		player1.update(keyState)
 		ball.draw(pixels)
 
 		tex.Update(nil, pixels, winWidth*4)
